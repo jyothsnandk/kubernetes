@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask + Express Kubernetes Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .status {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        .status-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .status-value {
+            color: #333;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .message-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Kubernetes Demo</h1>
+        <p class="subtitle">Flask Frontend ↔ Express Backend</p>
+        
+        <div class="status" id="status">
+            <div class="status-item">
+                <span class="status-label">Frontend:</span>
+                <span class="status-value success">✓ Running</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Backend Connection:</span>
+                <span class="status-value" id="backendStatus">Checking...</span>
+            </div>
+        </div>
+
+        <button onclick="fetchData()">Fetch Data from Backend</button>
+        
+        <input type="text" id="messageInput" placeholder="Enter a message to send to backend">
+        <button onclick="sendMessage()">Send Message</button>
+
+        <div class="message-box" id="messageBox">
+            <em>Click a button to interact with the backend...</em>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const messageBox = document.getElementById('messageBox');
+            const backendStatus = document.getElementById('backendStatus');
+            
+            messageBox.innerHTML = 'Fetching data...';
+            
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    backendStatus.innerHTML = '<span class="success">✓ Connected</span>';
+                    messageBox.innerHTML = `<strong>Response:</strong><br>${JSON.stringify(data, null, 2)}`;
+                } else {
+                    backendStatus.innerHTML = '<span class="error">✗ Error</span>';
+                    messageBox.innerHTML = `<strong>Error:</strong><br>${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                backendStatus.innerHTML = '<span class="error">✗ Disconnected</span>';
+                messageBox.innerHTML = `<strong>Error:</strong><br>${error.message}`;
+            }
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const messageBox = document.getElementById('messageBox');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                messageBox.innerHTML = '<strong>Error:</strong> Please enter a message';
+                return;
+            }
+            
+            messageBox.innerHTML = 'Sending message...';
+            
+            try {
+                const response = await fetch('/api/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageBox.innerHTML = `<strong>Response:</strong><br>${JSON.stringify(data, null, 2)}`;
+                } else {
+                    messageBox.innerHTML = `<strong>Error:</strong><br>${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                messageBox.innerHTML = `<strong>Error:</strong><br>${error.message}`;
+            }
+        }
+
+        // Check backend connection on page load
+        window.onload = function() {
+            fetchData();
+        };
+    </script>
+</body>
+</html>
